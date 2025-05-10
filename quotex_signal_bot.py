@@ -3,19 +3,6 @@ import pandas as pd
 import ta
 import time
 from datetime import datetime
-import requests
-
-# === Telegram Config ===
-TELEGRAM_TOKEN = "7915844433:AAFGV6JT0YSbfuxBRbU1mNHU_yEJZERAs0"
-TELEGRAM_CHAT_ID = "2034814507"
-
-def send_telegram(message):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
-    try:
-        requests.post(url, data=payload)
-    except:
-        print("Telegram alert failed.")
 
 def fetch_data(symbol):
     df = yf.download(tickers=symbol, interval='1m', period='1d', progress=False)
@@ -33,9 +20,17 @@ def generate_signal(df):
 
     last = df.iloc[-1]
 
-    if last['ema5'] > last['ema13'] > last['ema50'] and last['rsi'] > 55 and last['Close'] < last['bb_upper']:
+    if (
+        last['ema5'] > last['ema13'] > last['ema50'] and
+        last['rsi'] > 55 and
+        last['Close'] < last['bb_upper']
+    ):
         return 'CALL'
-    elif last['ema5'] < last['ema13'] < last['ema50'] and last['rsi'] < 45 and last['Close'] > last['bb_lower']:
+    elif (
+        last['ema5'] < last['ema13'] < last['ema50'] and
+        last['rsi'] < 45 and
+        last['Close'] > last['bb_lower']
+    ):
         return 'PUT'
     else:
         return 'NO SIGNAL'
@@ -53,14 +48,9 @@ def run_signal_bot():
             df = fetch_data(symbol)
             signal = generate_signal(df)
             price = df['Close'].iloc[-1]
-            print(f"{name} | Signal: {signal} | Price: {price:.2f}")
-
-            if signal != 'NO SIGNAL':
-                message = f"{name} SIGNAL: {signal} | Price: {price:.2f} | Time: {datetime.now().strftime('%H:%M:%S')}"
-                send_telegram(message)
-
-        print("-" * 60)
+            print(f"{name} | Signal: {signal} | Price: {price}")
         time.sleep(60)
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     run_signal_bot()
+
